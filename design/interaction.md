@@ -36,3 +36,14 @@ loop
     player->>player: 計算結果を表示
 end
 ```
+
+## ER図
+
+```mermaid
+erDiagram
+    user ||--o{ character : has
+    character ||--|| state : has
+    state ||--|| dungeon-info : has
+    state ||--|| character-info : has
+    character-info ||--o{ item : has
+```
