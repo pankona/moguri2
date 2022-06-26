@@ -43,13 +43,13 @@ func (m *Moguri) Interact(ctx context.Context, characterID string, action int) e
 		return ErrValidateInput
 	}
 
-	// next state
-	ns, err := i.Interact(cs, action)
+	// next interaction
+	ni, err := i.Interact(cs, action)
 	if err != nil {
 		return err
 	}
 
-	err = m.StateStore.SaveState(ctx, characterID, ns)
+	err = m.StateStore.UpdateCurrentInteraction(ctx, characterID, cs, ni)
 	if err != nil {
 		return err
 	}
