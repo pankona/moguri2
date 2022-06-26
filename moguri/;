@@ -1,0 +1,46 @@
+package moguri
+
+import (
+	"context"
+	"fmt"
+)
+
+type exampleStateStore struct{}
+
+var globalState = map[string]*State{
+	"example_character_id": {},
+}
+
+type exampleInteracter struct{}
+
+func (ss *exampleStateStore) LoadState(ctx context.Context, characterID string) (*State, error) {
+	return globalState[characterID], nil
+}
+func (ss *exampleStateStore) SaveState(ctx context.Context, characterID string, state *State) error {
+	globalState[characterID] = state
+	return nil
+}
+
+func ExampleMoguri() {
+	m := &Moguri{
+		StateStore: &exampleStateStore{},
+	}
+
+	var (
+		ctx         = context.Background()
+		characterID = "example_character_id"
+	)
+
+	i, _ := m.GetCurrentInteracter(ctx, characterID)
+	fmt.Println(i.GetCurrentMessage())
+	fmt.Println(i.GetCurrentChoices())
+
+	actionNum := 0
+	_ = m.Interact(ctx, characterID, actionNum)
+
+	i, _ = m.GetCurrentInteracter(ctx, characterID)
+	fmt.Println(i.GetLastActionResult())
+
+	// Output:
+	// hoge
+}
