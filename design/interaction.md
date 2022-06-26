@@ -32,8 +32,6 @@ loop
     player->>server: 選択肢をチョイス
     server->>server: チョイスに従って状態を計算
     server->>repository: 状態を保存
-    server->>player: 計算結果を返却
-    player->>player: 計算結果を表示
 end
 ```
 
