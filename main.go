@@ -14,7 +14,7 @@ func main() {
 		StateStore: &globalStateStore{
 			state: map[string]moguri.State{
 				characterID: &globalState{
-					currentInteraction: NewPondInteraction(),
+					currentInteraction: &choiceRoomInteraction{},
 				},
 			},
 		},
