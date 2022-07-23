@@ -9,7 +9,8 @@ import (
 // とりあえずランダムに 3 つほど部屋の候補を返す
 func GetRoomInteractionRandom() (moguri.Interacter, error) {
 	var roomlist = map[string]func() moguri.Interacter{
-		"泉の部屋": NewPondInteraction,
+		"泉の部屋":  NewPondInteraction,
+		"野菜の部屋": NewVegitInteraction,
 	}
 
 	choices := make([]string, 0, 3)
@@ -17,6 +18,7 @@ func GetRoomInteractionRandom() (moguri.Interacter, error) {
 	for i := 0; i < cap(choices); i++ {
 		for k := range roomlist {
 			choices = append(choices, k)
+			break
 		}
 	}
 	return &choiceRoomInteraction{
@@ -24,7 +26,7 @@ func GetRoomInteractionRandom() (moguri.Interacter, error) {
 		choices: choices,
 		interact: func(state moguri.State, action int) (moguri.Interacter, error) {
 			return &choiceRoomInteraction{
-				message: fmt.Sprintf("%sの部屋へ向かった。", choices[action]),
+				message: fmt.Sprintf("%sへ向かった。", choices[action]),
 				choices: []string{"ok"},
 				interact: func(state moguri.State, action int) (moguri.Interacter, error) {
 					return roomlist[choices[action]](), nil
@@ -128,4 +130,58 @@ func (p *pondInteraction) ValidateInput(state moguri.State, action int) (bool, e
 
 func (p *pondInteraction) Interact(state moguri.State, action int) (moguri.Interacter, error) {
 	return p.interact(state, action)
+}
+
+type vegitInteraction struct {
+	message  string
+	choices  []string
+	interact func(state moguri.State, action int) (moguri.Interacter, error)
+}
+
+func NewVegitInteraction() moguri.Interacter {
+	return &vegitInteraction{
+		message: "草が生えている",
+		choices: []string{"食べる", "立ち去る"},
+		interact: func(state moguri.State, action int) (moguri.Interacter, error) {
+			switch action {
+			case 0: // 飲んでみる
+				return &vegitInteraction{
+					message: fmt.Sprintf("元気になった。"),
+					choices: []string{"ok"},
+					interact: func(state moguri.State, action int) (moguri.Interacter, error) {
+						return GetRoomInteractionRandom()
+					},
+				}, nil
+			case 1: // 立ち去る
+				return &vegitInteraction{
+					message: fmt.Sprintf("立ち去った。"),
+					choices: []string{"ok"},
+					interact: func(state moguri.State, action int) (moguri.Interacter, error) {
+						return GetRoomInteractionRandom()
+					},
+				}, nil
+			default:
+				panic(fmt.Sprintf("invalid choice: %d", action))
+			}
+		},
+	}
+}
+
+func (v *vegitInteraction) GetCurrentMessage() string {
+	return v.message
+}
+
+func (v *vegitInteraction) GetCurrentChoices() []string {
+	return v.choices
+}
+
+func (v *vegitInteraction) ValidateInput(state moguri.State, action int) (bool, error) {
+	if action < 0 || action >= len(v.choices) {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (v *vegitInteraction) Interact(state moguri.State, action int) (moguri.Interacter, error) {
+	return v.interact(state, action)
 }
