@@ -14,8 +14,10 @@ func GetRoomInteractionRandom() (moguri.Interacter, error) {
 
 	choices := make([]string, 0, 3)
 	// ランダムに取り出す
-	for k := range roomlist {
-		choices = append(choices, k)
+	for i := 0; i < cap(choices); i++ {
+		for k := range roomlist {
+			choices = append(choices, k)
+		}
 	}
 	return &choiceRoomInteraction{
 		message: "どの部屋を選ぶ？",
