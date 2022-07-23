@@ -127,7 +127,7 @@ func NewVegitInteraction() moguri.Interacter {
 		choices: []string{"食べる", "立ち去る"},
 		interact: func(state moguri.State, action int) (moguri.Interacter, error) {
 			switch action {
-			case 0: // 飲んでみる
+			case 0: // 食べる
 				return &vegitInteraction{
 					message: fmt.Sprintf("元気になった。"),
 					choices: []string{"ok"},
