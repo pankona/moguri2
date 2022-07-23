@@ -6,9 +6,30 @@ import (
 	"github.com/pankona/moguri2/moguri"
 )
 
-// 現在の位置から次に選択可能な部屋を提示する
-func GetChoiceRoomInteraction(state moguri.State) (moguri.Interacter, error) {
-	return &choiceRoomInteraction{}, nil
+// とりあえずランダムに 3 つほど部屋の候補を返す
+func GetRoomInteractionRandom() (moguri.Interacter, error) {
+	var roomlist = map[string]func() moguri.Interacter{
+		"泉の部屋": NewPondInteraction,
+	}
+
+	choices := make([]string, 0, 3)
+	// ランダムに取り出す
+	for k := range roomlist {
+		choices = append(choices, k)
+	}
+	return &choiceRoomInteraction{
+		message: "どの部屋を選ぶ？",
+		choices: choices,
+		interact: func(state moguri.State, action int) (moguri.Interacter, error) {
+			return &choiceRoomInteraction{
+				message: fmt.Sprintf("%sの部屋へ向かった。", choices[action]),
+				choices: []string{"ok"},
+				interact: func(state moguri.State, action int) (moguri.Interacter, error) {
+					return roomlist[choices[action]](), nil
+				},
+			}, nil
+		},
+	}, nil
 }
 
 type choiceRoomInteraction struct {
@@ -59,7 +80,7 @@ type pondInteraction struct {
 	interact func(state moguri.State, action int) (moguri.Interacter, error)
 }
 
-func NewPondInteraction() *pondInteraction {
+func NewPondInteraction() moguri.Interacter {
 	return &pondInteraction{
 		message: "泉がある",
 		choices: []string{"飲んでみる", "立ち去る"},
@@ -70,7 +91,7 @@ func NewPondInteraction() *pondInteraction {
 					message: fmt.Sprintf("元気になった。"),
 					choices: []string{"ok"},
 					interact: func(state moguri.State, action int) (moguri.Interacter, error) {
-						return GetChoiceRoomInteraction(state)
+						return GetRoomInteractionRandom()
 					},
 				}, nil
 			case 1: // 立ち去る
@@ -78,7 +99,7 @@ func NewPondInteraction() *pondInteraction {
 					message: fmt.Sprintf("立ち去った。"),
 					choices: []string{"ok"},
 					interact: func(state moguri.State, action int) (moguri.Interacter, error) {
-						return GetChoiceRoomInteraction(state)
+						return GetRoomInteractionRandom()
 					},
 				}, nil
 			default:
