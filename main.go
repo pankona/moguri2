@@ -18,7 +18,13 @@ func main() {
 		StateStore: &globalStateStore{
 			state: map[string]moguri.State{
 				characterID: &globalState{
-					currentInteraction: NewChoiceRoomInteraction(),
+					currentInteraction: func() moguri.Interacter {
+						ret, err := GetRoomInteractionRandom()
+						if err != nil {
+							panic(fmt.Sprintf("failed to initialize first choices: %v", err))
+						}
+						return ret
+					}(),
 				},
 			},
 		},

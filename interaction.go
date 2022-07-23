@@ -42,23 +42,6 @@ type choiceRoomInteraction struct {
 	interact func(state moguri.State, action int) (moguri.Interacter, error)
 }
 
-func NewChoiceRoomInteraction() *choiceRoomInteraction {
-	choices := []string{"左の部屋", "中央の部屋", "右の部屋"}
-	return &choiceRoomInteraction{
-		message: "どの部屋を選ぶ？",
-		choices: choices,
-		interact: func(state moguri.State, action int) (moguri.Interacter, error) {
-			return &choiceRoomInteraction{
-				message: fmt.Sprintf("%sの部屋へ向かった。", choices[action]),
-				choices: []string{"ok"},
-				interact: func(state moguri.State, action int) (moguri.Interacter, error) {
-					return NewPondInteraction(), nil
-				},
-			}, nil
-		},
-	}
-}
-
 func (p *choiceRoomInteraction) GetCurrentMessage() string {
 	return p.message
 }
