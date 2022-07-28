@@ -3,7 +3,6 @@ package moguri
 import (
 	"context"
 	"errors"
-	"log"
 )
 
 type Moguri struct {
@@ -15,11 +14,11 @@ var ErrValidateInput = errors.New("invalid input")
 func (m *Moguri) GetCurrentInteraction(ctx context.Context, characterID string) (Interacter, error) {
 	// current state
 	cs, err := m.StateStore.LoadState(ctx, characterID)
+	if err != nil {
+		return nil, err
+	}
 
 	i, err := cs.GetCurrentInteraction()
-	if ci, err := cs.GetCharacterInfo(); err == nil {
-		log.Printf("%+v", ci)
-	}
 	if err != nil {
 		return nil, err
 	}

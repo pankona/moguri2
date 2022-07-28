@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,23 +15,23 @@ import (
 const characterID = "character_id"
 
 func main() {
-	m := &moguri.Moguri{
-		StateStore: &globalStateStore{
-			state: map[string]moguri.State{
-				characterID: &globalState{
-					currentInteraction: func() moguri.Interacter {
-						ret, err := GetRoomInteractionRandom()
-						if err != nil {
-							panic(fmt.Sprintf("failed to initialize first choices: %v", err))
-						}
-						return ret
-					}(),
-					characterInfo: &moguri.CharacterInfo{
-						HP: 10,
-					},
-				},
-			},
+	gss := &globalStateStore{}
+	gs := &globalState{
+		CurrentInteraction: func() moguri.Interacter {
+			ret, err := GetRoomInteractionRandom()
+			if err != nil {
+				panic(fmt.Sprintf("failed to initialize first choices: %v", err))
+			}
+			return ret
+		}(),
+		CharacterInfo: &moguri.CharacterInfo{
+			HP: 10,
 		},
+	}
+	gss.UpdateCurrentInteraction(context.Background(), characterID, gs)
+
+	m := &moguri.Moguri{
+		StateStore: gss,
 	}
 
 	r := mux.NewRouter()
