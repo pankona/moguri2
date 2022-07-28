@@ -25,6 +25,9 @@ func main() {
 						}
 						return ret
 					}(),
+					characterInfo: &moguri.CharacterInfo{
+						HP: 10,
+					},
 				},
 			},
 		},

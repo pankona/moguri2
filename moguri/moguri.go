@@ -3,6 +3,7 @@ package moguri
 import (
 	"context"
 	"errors"
+	"log"
 )
 
 type Moguri struct {
@@ -16,6 +17,9 @@ func (m *Moguri) GetCurrentInteraction(ctx context.Context, characterID string) 
 	cs, err := m.StateStore.LoadState(ctx, characterID)
 
 	i, err := cs.GetCurrentInteraction()
+	if ci, err := cs.GetCharacterInfo(); err == nil {
+		log.Printf("%+v", ci)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -44,12 +48,12 @@ func (m *Moguri) Interact(ctx context.Context, characterID string, action int) e
 	}
 
 	// next interaction
-	ni, err := i.Interact(cs, action)
+	ns, err := i.Interact(cs, action)
 	if err != nil {
 		return err
 	}
 
-	err = m.StateStore.UpdateCurrentInteraction(ctx, characterID, cs, ni)
+	err = m.StateStore.UpdateCurrentInteraction(ctx, characterID, ns)
 	if err != nil {
 		return err
 	}

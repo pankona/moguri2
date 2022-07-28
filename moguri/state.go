@@ -1,3 +1,5 @@
 package moguri
 
-type CharacterInfo struct{}
+type CharacterInfo struct {
+	HP int
+}

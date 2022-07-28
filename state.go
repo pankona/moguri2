@@ -4,6 +4,7 @@ import "github.com/pankona/moguri2/moguri"
 
 type globalState struct {
 	currentInteraction moguri.Interacter
+	characterInfo      *moguri.CharacterInfo
 }
 
 func (e *globalState) GetCurrentInteraction() (moguri.Interacter, error) {
@@ -11,5 +12,5 @@ func (e *globalState) GetCurrentInteraction() (moguri.Interacter, error) {
 }
 
 func (e *globalState) GetCharacterInfo() (*moguri.CharacterInfo, error) {
-	return &moguri.CharacterInfo{}, nil
+	return e.characterInfo, nil
 }

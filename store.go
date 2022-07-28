@@ -14,9 +14,8 @@ func (s *globalStateStore) LoadState(ctx context.Context, characterID string) (m
 	return s.state[characterID], nil
 }
 
-func (s *globalStateStore) UpdateCurrentInteraction(ctx context.Context, characterID string, state moguri.State, interaction moguri.Interacter) error {
+func (s *globalStateStore) UpdateCurrentInteraction(ctx context.Context, characterID string, state moguri.State) error {
 	es := state.(*globalState)
-	es.currentInteraction = interaction
 	s.state[characterID] = es
 	return nil
 }
