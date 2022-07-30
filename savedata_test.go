@@ -83,12 +83,12 @@ func TestSaveData(t *testing.T) {
 
 	rawJSON := &bytes.Buffer{}
 	if err := json.NewEncoder(rawJSON).Encode(sd); err != nil {
-		panic(err)
+		t.Fatalf("failed to encode JSON: %v", err)
 	}
 
 	indentedJSON := &bytes.Buffer{}
 	if err := json.Indent(indentedJSON, rawJSON.Bytes(), "", "  "); err != nil {
-		panic(err)
+		t.Fatalf("failed to indent JSON: %v", err)
 	}
 	t.Log(indentedJSON.String())
 }
