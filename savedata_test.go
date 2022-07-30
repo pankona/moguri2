@@ -77,7 +77,9 @@ func TestSaveData(t *testing.T) {
 			CurrentMessage:       "",
 		},
 		CharacterInfo: CharacterInfo{
-			HP: 0,
+			CharacterID: "character_id",
+			Name:        "character_name",
+			HP:          0,
 		},
 	}
 
