@@ -7,7 +7,7 @@ import (
 )
 
 type Attraction interface {
-	Interactions() []*Interaction
+	Interactions() ([]*Interaction, error)
 }
 
 type Interaction struct {
@@ -21,8 +21,8 @@ type Entrance struct {
 	interactions []*Interaction
 }
 
-func (e *Entrance) Interactions() []*Interaction {
-	return e.interactions
+func (e *Entrance) Interactions() ([]*Interaction, error) {
+	return e.interactions, nil
 }
 
 var ErrNoSuchInteraction = errors.New("no such interaction")
@@ -59,8 +59,8 @@ type Pond struct {
 	interactions []*Interaction
 }
 
-func (p *Pond) Interactions() []*Interaction {
-	return p.interactions
+func (p *Pond) Interactions() ([]*Interaction, error) {
+	return p.interactions, nil
 }
 
 var pond = &Pond{
@@ -84,8 +84,8 @@ type Veget struct {
 	interactions []*Interaction
 }
 
-func (v *Veget) Interactions() []*Interaction {
-	return v.interactions
+func (v *Veget) Interactions() ([]*Interaction, error) {
+	return v.interactions, nil
 }
 
 var veget = &Veget{
@@ -166,11 +166,16 @@ func choiceRoomInteractions(sd *SaveData) ([]*Interaction, error) {
 				if currentAttraction == nil {
 					return Progress{}, fmt.Errorf("current attraction is missing: %w", ErrCurrentInteractionMissing)
 				}
-				i := currentAttraction.Interactions()[0]
+
+				interactions, err := currentAttraction.Interactions()
+				if err != nil {
+					return Progress{}, fmt.Errorf("failed to get interactions: %w", err)
+				}
+
 				return Progress{
 					Location:             sd.Progress.Location,
-					CurrentInteractionID: i.ID,
-					CurrentMessage:       i.Message,
+					CurrentInteractionID: interactions[0].ID,
+					CurrentMessage:       interactions[0].Message,
 				}, nil
 			},
 		},
@@ -178,36 +183,35 @@ func choiceRoomInteractions(sd *SaveData) ([]*Interaction, error) {
 }
 
 func getCurrentInteraction(sd *SaveData) (*Interaction, error) {
+	var interactions []*Interaction
+
 	if strings.HasPrefix(string(sd.Progress.CurrentInteractionID), "choice-next") {
-		interactions, err := choiceRoomInteractions(sd)
+		var err error
+		interactions, err = choiceRoomInteractions(sd)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get interactions: %w", err)
 		}
-		var currentInteraction *Interaction
-		for _, i := range interactions {
-			if sd.Progress.CurrentInteractionID == i.ID {
-				currentInteraction = i
+	} else {
+		var currentAttraction Attraction
+		for _, r := range sd.Structure.Rooms {
+			if r.Location.Depth == sd.Progress.Location.Depth &&
+				r.Location.RoomIndex == sd.Progress.Location.RoomIndex {
+				currentAttraction = attractionByName[r.Name]
 			}
 		}
-		if currentInteraction == nil {
-			return nil, fmt.Errorf("current interaction is missing: %w", ErrCurrentInteractionMissing)
+		if currentAttraction == nil {
+			return nil, fmt.Errorf("current attraction is missing: %w", ErrCurrentInteractionMissing)
 		}
-		return currentInteraction, nil
-	}
 
-	var currentAttraction Attraction
-	for _, r := range sd.Structure.Rooms {
-		if r.Location.Depth == sd.Progress.Location.Depth &&
-			r.Location.RoomIndex == sd.Progress.Location.RoomIndex {
-			currentAttraction = attractionByName[r.Name]
+		var err error
+		interactions, err = currentAttraction.Interactions()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get interactions: %w", err)
 		}
-	}
-	if currentAttraction == nil {
-		return nil, fmt.Errorf("current attraction is missing: %w", ErrCurrentInteractionMissing)
 	}
 
 	var currentInteraction *Interaction
-	for _, i := range currentAttraction.Interactions() {
+	for _, i := range interactions {
 		if InteractionID(sd.Progress.CurrentInteractionID) == i.ID {
 			currentInteraction = i
 		}
