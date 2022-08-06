@@ -1,111 +1,82 @@
 package main
 
 import (
-	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
 )
-
-type Attraction interface {
-	Interactions() []*Interaction
-}
-
-type Interaction struct {
-	id       string
-	message  string
-	choices  []string
-	interact func() (string, error)
-}
-
-type Entrance struct {
-	interactions []*Interaction
-}
-
-func (e *Entrance) Interactions() []*Interaction {
-	return e.interactions
-}
-
-var ErrNoSuchInteraction = errors.New("no such interaction")
-
-func (e *Entrance) IntractionByID(id string) (*Interaction, error) {
-	for _, v := range e.interactions {
-		if v.id == id {
-			return v, nil
-		}
-	}
-	return nil, fmt.Errorf("%s is missing in interaction list: %w", id, ErrNoSuchInteraction)
-}
-
-var entrance = &Entrance{
-	interactions: []*Interaction{
-		{
-			id:      "entrance-0",
-			message: "Welcome to entrance.",
-			interact: func() (string, error) {
-				return "entrance-1", nil
-			},
-		},
-		{
-			id:      "entrance-1",
-			message: "Let's choice next door.",
-			interact: func() (string, error) {
-				return "choice_next_room", nil
-			},
-		},
-	},
-}
-
-var roomByName = map[string]Attraction{
-	"entrance": entrance,
-}
-
-func loadSaveData(sdStore *SaveDataStore) (*SaveData, error) {
-	return sdStore.Load(context.Background())
-}
-
-var ErrCurrentInteractionMissing = errors.New("current interaction missing")
-
-func loadCurrentInteraction(sdStore *SaveDataStore) (*Interaction, error) {
-	sd, err := loadSaveData(sdStore)
-	if err != nil {
-		panic(err)
-	}
-
-	var currentAttraction Attraction
-	for _, r := range sd.Structure.Rooms {
-		if r.Location.Depth == sd.Progress.Location.Depth &&
-			r.Location.RoomIndex == sd.Progress.Location.RoomIndex {
-			currentAttraction = roomByName[r.Name]
-		}
-	}
-	if currentAttraction == nil {
-		return nil, fmt.Errorf("current attraction is missing: %w", ErrCurrentInteractionMissing)
-	}
-
-	var currentInteraction *Interaction
-	for _, i := range currentAttraction.Interactions() {
-		if sd.Progress.CurrentInteractionID == i.id {
-			currentInteraction = i
-		}
-	}
-	if currentInteraction == nil {
-		return nil, fmt.Errorf("current interaction is missing: %w", ErrCurrentInteractionMissing)
-	}
-
-	return currentInteraction, nil
-}
 
 func main() {
 	sdStore := &SaveDataStore{}
-
 	if err := initializeSaveData(sdStore); err != nil {
 		panic(err)
 	}
 
-	interaction, err := loadCurrentInteraction(sdStore)
-	if err != nil {
-		panic(err)
-	}
+	http.HandleFunc("/ping", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("pong")) }))
+	http.HandleFunc("/current_interaction", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 
-	fmt.Printf("%+v\n", interaction)
+		sd, err := loadSaveData(sdStore)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to load save data: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		ci, err := getCurrentInteraction(sd)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to get current interaction: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		if err := json.NewEncoder(w).Encode(ci); err != nil {
+			http.Error(w, fmt.Sprintf("failed to encode json body: %v", err), http.StatusInternalServerError)
+			return
+		}
+	}))
+	http.HandleFunc("/interact", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		type Request struct {
+			Choice string `json:"choice"`
+		}
+
+		req := Request{}
+		json.NewDecoder(r.Body).Decode(&req)
+
+		sd, err := loadSaveData(sdStore)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to load save data: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		ci, err := getCurrentInteraction(sd)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to get current interaction: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		nextInteractionID, err := ci.interact(req.Choice)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to interact: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Println(nextInteractionID)
+
+		// update savedata
+	}))
+
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		if !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("Serve closed: %v", err)
+		}
+	}
 }

@@ -8,6 +8,10 @@ import (
 	"fmt"
 )
 
+func loadSaveData(sdStore *SaveDataStore) (*SaveData, error) {
+	return sdStore.Load(context.Background())
+}
+
 type SaveData struct {
 	Structure     Structure     `json:"structure"`
 	Progress      Progress      `json:"progress"`
