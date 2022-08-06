@@ -14,7 +14,7 @@ type Interaction struct {
 	ID       InteractionID `json:"id"`
 	Message  string        `json:"message"`
 	Choices  []string      `json:"choices"`
-	interact func(sd *SaveData, choice string) (InteractionID, *Location, string, error)
+	interact func(sd *SaveData, choice string) (Progress, error)
 }
 
 type Entrance struct {
@@ -44,8 +44,12 @@ var entrance = &Entrance{
 			ID:      "entrance-0",
 			Message: "Welcome to entrance.",
 			Choices: nil,
-			interact: func(sd *SaveData, _ string) (InteractionID, *Location, string, error) {
-				return "choice-next", &sd.Progress.Location, "Choice next room.", nil
+			interact: func(sd *SaveData, _ string) (Progress, error) {
+				return Progress{
+					Location:             sd.Progress.Location,
+					CurrentInteractionID: "choice-next",
+					CurrentMessage:       "Choice next room.",
+				}, nil
 			},
 		},
 	},
@@ -65,8 +69,12 @@ var pond = &Pond{
 			ID:      "pond-0",
 			Message: "Pond is there",
 			Choices: nil,
-			interact: func(sd *SaveData, _ string) (InteractionID, *Location, string, error) {
-				return "choice-next", &sd.Progress.Location, "Choice next room.", nil
+			interact: func(sd *SaveData, _ string) (Progress, error) {
+				return Progress{
+					Location:             sd.Progress.Location,
+					CurrentInteractionID: "choice-next",
+					CurrentMessage:       "Choice next room.",
+				}, nil
 			},
 		},
 	},
@@ -86,8 +94,12 @@ var veget = &Veget{
 			ID:      "veget-0",
 			Message: "Vegetable is there",
 			Choices: nil,
-			interact: func(sd *SaveData, _ string) (InteractionID, *Location, string, error) {
-				return "choice-next", &sd.Progress.Location, "Choice next room.", nil
+			interact: func(sd *SaveData, _ string) (Progress, error) {
+				return Progress{
+					Location:             sd.Progress.Location,
+					CurrentInteractionID: "choice-next",
+					CurrentMessage:       "Choice next room.",
+				}, nil
 			},
 		},
 	},
@@ -118,7 +130,7 @@ func choiceRoomInteractions(sd *SaveData) ([]*Interaction, error) {
 				}
 				return candidates
 			}(),
-			interact: func(sd *SaveData, choice string) (InteractionID, *Location, string, error) {
+			interact: func(sd *SaveData, choice string) (Progress, error) {
 				var candidates []Room
 				for _, r := range sd.Structure.Rooms {
 					if r.Location.Depth == sd.Progress.Location.Depth+1 {
@@ -128,18 +140,22 @@ func choiceRoomInteractions(sd *SaveData) ([]*Interaction, error) {
 				for _, c := range candidates {
 					if c.Name == choice {
 						// validation OK
-						return "choice-next-1", &c.Location, fmt.Sprintf("Go to %s", c.Name), nil
+						return Progress{
+							Location:             c.Location,
+							CurrentInteractionID: "choice-next-1",
+							CurrentMessage:       fmt.Sprintf("Go to %s", c.Name),
+						}, nil
 					}
 				}
 				// validation NG
-				return "", nil, "", fmt.Errorf("failed to interact: %w", ErrInvalidChoice)
+				return Progress{}, fmt.Errorf("failed to interact: %w", ErrInvalidChoice)
 			},
 		},
 		{
 			ID:      "choice-next-1",
 			Message: sd.Progress.CurrentMessage,
 			Choices: nil,
-			interact: func(sd *SaveData, _ string) (InteractionID, *Location, string, error) {
+			interact: func(sd *SaveData, _ string) (Progress, error) {
 				var currentAttraction Attraction
 				for _, r := range sd.Structure.Rooms {
 					if r.Location.Depth == sd.Progress.Location.Depth &&
@@ -148,10 +164,14 @@ func choiceRoomInteractions(sd *SaveData) ([]*Interaction, error) {
 					}
 				}
 				if currentAttraction == nil {
-					return "", &sd.Progress.Location, "", fmt.Errorf("current attraction is missing: %w", ErrCurrentInteractionMissing)
+					return Progress{}, fmt.Errorf("current attraction is missing: %w", ErrCurrentInteractionMissing)
 				}
 				i := currentAttraction.Interactions()[0]
-				return i.ID, &sd.Progress.Location, i.Message, nil
+				return Progress{
+					Location:             sd.Progress.Location,
+					CurrentInteractionID: i.ID,
+					CurrentMessage:       i.Message,
+				}, nil
 			},
 		},
 	}, nil

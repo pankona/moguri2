@@ -77,18 +77,13 @@ func main() {
 			return
 		}
 
-		nextInteractionID, loc, message, err := ci.interact(sd, req.Choice)
+		updatedProgress, err := ci.interact(sd, req.Choice)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to interact: %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		sd.Progress = Progress{
-			Location:             *loc,
-			CurrentInteractionID: nextInteractionID,
-			CurrentMessage:       message,
-		}
-
+		sd.Progress = updatedProgress
 		if err := sdStore.Save(r.Context(), sd); err != nil {
 			http.Error(w, fmt.Sprintf("failed to update save data: %v", err), http.StatusInternalServerError)
 			return
