@@ -30,9 +30,9 @@ type Location struct {
 }
 
 type Progress struct {
-	Location             Location `json:"location"`
-	CurrentInteractionID string   `json:"current_interaction_id"`
-	CurrentMessage       string   `json:"current_message"`
+	Location             Location      `json:"location"`
+	CurrentInteractionID InteractionID `json:"current_interaction_id"`
+	CurrentMessage       string        `json:"current_message"`
 }
 
 type CharacterInfo struct {
@@ -62,9 +62,10 @@ func (s *SaveDataStore) Save(ctx context.Context, sd *SaveData) error {
 	if sd == nil {
 		return fmt.Errorf("failed to save save data: %w", ErrNilSaveData)
 	}
-	if err := json.NewEncoder(bytes.NewBuffer(s.buf)).Encode(sd); err != nil {
+	buf, err := json.Marshal(sd)
+	if err != nil {
 		return err
 	}
-	fmt.Println("s.buf:", string(s.buf))
+	s.buf = buf
 	return nil
 }

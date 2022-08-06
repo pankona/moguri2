@@ -27,7 +27,7 @@ func TestSaveData(t *testing.T) {
 					Next: []int{0},
 				},
 				{
-					Name: "vegit",
+					Name: "veget",
 					Location: Location{
 						Depth:     1,
 						RoomIndex: 1,
@@ -43,7 +43,7 @@ func TestSaveData(t *testing.T) {
 					Next: []int{0},
 				},
 				{
-					Name: "vegit",
+					Name: "veget",
 					Location: Location{
 						Depth:     2,
 						RoomIndex: 1,

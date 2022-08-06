@@ -46,7 +46,7 @@ func GenerateStructure() (*Structure, error) {
 				Next: []int{0},
 			},
 			{
-				Name: "vegit",
+				Name: "veget",
 				Location: Location{
 					Depth:     1,
 					RoomIndex: 1,
@@ -62,7 +62,7 @@ func GenerateStructure() (*Structure, error) {
 				Next: []int{0},
 			},
 			{
-				Name: "vegit",
+				Name: "veget",
 				Location: Location{
 					Depth:     2,
 					RoomIndex: 1,
