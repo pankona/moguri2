@@ -93,10 +93,6 @@ func main() {
 			http.Error(w, fmt.Sprintf("failed to update save data: %v", err), http.StatusInternalServerError)
 			return
 		}
-
-		fmt.Println(nextInteractionID)
-
-		// update savedata
 	}))
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {
