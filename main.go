@@ -21,7 +21,7 @@ func main() {
 			return
 		}
 
-		sd, err := loadSaveData(sdStore)
+		sd, err := sdStore.Load(r.Context())
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to load save data: %v", err), http.StatusInternalServerError)
 			return
@@ -51,25 +51,25 @@ func main() {
 		req := Request{}
 		json.NewDecoder(r.Body).Decode(&req)
 
-		sd, err := loadSaveData(sdStore)
+		_, err := sdStore.Load(r.Context())
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to load save data: %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		ci, err := getCurrentInteraction(sd)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("failed to get current interaction: %v", err), http.StatusInternalServerError)
-			return
-		}
+		//ci, err := getCurrentInteraction(sd)
+		//if err != nil {
+		//	http.Error(w, fmt.Sprintf("failed to get current interaction: %v", err), http.StatusInternalServerError)
+		//	return
+		//}
 
-		nextInteractionID, err := ci.interact(req.Choice)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("failed to interact: %v", err), http.StatusInternalServerError)
-			return
-		}
+		//nextInteractionID, err := ci.interact(req.Choice)
+		//if err != nil {
+		//	http.Error(w, fmt.Sprintf("failed to interact: %v", err), http.StatusInternalServerError)
+		//	return
+		//}
 
-		fmt.Println(nextInteractionID)
+		//fmt.Println(nextInteractionID)
 
 		// update savedata
 	}))
